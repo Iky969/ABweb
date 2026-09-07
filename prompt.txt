@@ -24,5 +24,5 @@ Spesifikasi & Arsitektur Aplikasi:
 
 Mohon hasilkan seluruh kode lengkap tanpa pemotongan (no placeholders) dan siap di-deploy.
 
-api key bot tellegram:8972855558:AAG-gayE-PG5YaOK941EhtsvcItsj_-OGA4
+api key bot tellegram:123456:abcdef
 sunflower web link:https://www.sunflower-land.com/

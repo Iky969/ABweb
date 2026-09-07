@@ -32,7 +32,7 @@ from telegram.ext import (
 # 1. Load Environment Variables
 load_dotenv()
 
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8972855558:AAG-gayE-PG5YaOK941EhtsvcItsj_-OGA4")
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "123456:abcdef")
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://sunflower-tma.vercel.app")
 SUNFLOWER_GAME_URL = os.getenv("SUNFLOWER_GAME_URL", "https://sunflower-land.com/play/")
 SFL_CONTRACT_ADDRESS = "0xd1f9c58e33933a9970353798ac555049721a5948"

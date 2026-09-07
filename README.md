@@ -54,7 +54,7 @@ pip install -r requirements.txt
 ### 3. Konfigurasi `.env`
 Pastikan file `.env` telah dikonfigurasi:
 ```env
-TELEGRAM_BOT_TOKEN=8972855558:AAG-gayE-PG5YaOK941EhtsvcItsj_-OGA4
+TELEGRAM_BOT_TOKEN=123456:abcdef
 WEBAPP_URL=https://sunflower-tma.vercel.app
 SUNFLOWER_GAME_URL=https://sunflower-land.com/play/
 ```
@@ -113,7 +113,7 @@ Salin URL `https://...` yang dihasilkan ke file `.env` pada variabel `WEBAPP_URL
 Ikuti langkah-langkah berikut di aplikasi Telegram untuk menghubungkan Mini App ke bot Anda:
 
 1. Buka Telegram dan cari **[@BotFather](https://t.me/BotFather)**.
-2. Ketik `/mybots` dan pilih bot Anda (misalnya **`@DbsRza_bot`**).
+2. Ketik `/mybots` dan pilih bot Anda (misalnya **`@farmBot`**).
 
 ### A. Mengatur Menu Button (Tombol WebApp di Samping Kolom Chat)
 1. Di menu bot pada BotFather, pilih **Bot Settings** &rarr; **Menu Button** &rarr; **Configure menu button**.
@@ -122,22 +122,22 @@ Ikuti langkah-langkah berikut di aplikasi Telegram untuk menghubungkan Mini App 
 4. Selesai! Sekarang di obrolan bot, pengguna akan melihat tombol permanen di samping kolom pesan untuk membuka game dalam satu klik.
 
 ### B. Mendaftarkan Mini App Resmi (`/newapp`)
-Jika Anda ingin bot memiliki link peluncur resmi `t.me/DbsRza_bot/app`:
+Jika Anda ingin bot memiliki link peluncur resmi `t.me/farmBot/app`:
 1. Di `@BotFather`, ketik `/newapp`.
-2. Pilih bot Anda (`@DbsRza_bot`).
+2. Pilih bot Anda (`@farmBot`).
 3. Masukkan judul app: `Sunflower Land TMA`.
 4. Masukkan deskripsi pendek: `Mainkan game metaverse Web3 Sunflower Land langsung di Telegram!`.
 5. Unggah foto avatar/ikon Mini App (resolusi 640x640 px).
 6. (Opsional) Kirim animasi GIF (resolusi 640x360 px) atau ketik `/empty`.
 7. Masukkan WebApp URL: `https://sunflower-tma.vercel.app`.
 8. Tentukan short name (nama link): `game` atau `play`.
-9. Link peluncur Mini App Anda sekarang aktif di: `https://t.me/DbsRza_bot/game`.
+9. Link peluncur Mini App Anda sekarang aktif di: `https://t.me/farmBot/game`.
 
 ---
 
 ## 🎮 Cara Penggunaan Bot
 
-1. Buka obrolan dengan bot di Telegram: **[@DbsRza_bot](https://t.me/DbsRza_bot)**.
+1. Buka obrolan dengan bot di Telegram: **[@farmBot](https://t.me/farmBot)**.
 2. Kirim perintah `/start`.
 3. Klik tombol **"🌻 Buka Sunflower Land (TMA)"**.
 4. Game akan langsung terbuka secara fullscreen di layar Telegram Anda.
