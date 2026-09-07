@@ -11,6 +11,8 @@ Proyek ini adalah implementasi lengkap sistem **Telegram Mini App (TMA)** berbas
 ├── public/
 │   └── index.html          # Frontend Telegram Mini App (Iframe game, Web3 modal, HUD)
 ├── main.py                 # Backend Telegram Bot (Async python-telegram-bot v20+)
+├── scripts/
+│   └── automation_template.py # Monitor status & hook otomatisasi lokal yang aman
 ├── requirements.txt        # Dependensi Python (python-telegram-bot, httpx, python-dotenv)
 ├── vercel.json             # Konfigurasi deployment 1-klik ke Vercel (HTTPS)
 ├── .env                    # Variabel environment & token bot (aktif)
@@ -63,6 +65,20 @@ SUNFLOWER_GAME_URL=https://sunflower-land.com/play/
 ### 4. Menjalankan Bot
 ```bash
 python3 main.py
+```
+
+### Template otomatisasi aman
+
+Template `scripts/automation_template.py` disediakan untuk tugas non-invasif,
+seperti memantau ketersediaan halaman game atau mengirim notifikasi lokal. Ia
+tidak mengendalikan game, wallet, akun Telegram, atau transaksi.
+
+```bash
+# Cek satu kali
+python3 scripts/automation_template.py
+
+# Pantau setiap lima menit
+python3 scripts/automation_template.py --interval 300
 ```
 
 ---

@@ -459,7 +459,7 @@ async def post_init(application: Application) -> None:
 
 def main() -> None:
     """Fungsi utama untuk menjalankan Telegram Bot."""
-    if not BOT_TOKEN or BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
+    if not BOT_TOKEN or BOT_TOKEN in {"YOUR_BOT_TOKEN_HERE", "123456:abcdef"}:
         logger.error("TELEGRAM_BOT_TOKEN belum disetel! Harap isi di file .env")
         sys.exit(1)
 
