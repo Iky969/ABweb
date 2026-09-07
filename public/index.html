@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Sunflower Land - Telegram Mini App</title>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Ethers.js (v6) for Web3 Wallet Connections -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+
+  <!-- Google Fonts: Inter & Press Start 2P for Pixel Farm vibe -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            pixel: ['"Press Start 2P"', 'monospace'],
+          },
+          colors: {
+            farm: {
+              50: '#f4fbf4',
+              100: '#e5f6e6',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#0e3d1d',
+              dark: '#0a1d0f',
+            },
+            sunflower: {
+              300: '#fde047',
+              400: '#facc15',
+              500: '#eab308',
+              600: '#ca8a04',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      background-color: #0d1f12;
+      color: #f8fafc;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+    }
+    .game-iframe-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+    }
+    iframe#gameFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+    /* Smooth glassmorphism */
+    .glass-panel {
+      background: rgba(14, 45, 23, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(74, 222, 128, 0.25);
+    }
+    .glass-modal {
+      background: rgba(10, 29, 15, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(74, 222, 128, 0.35);
+    }
+    /* Pixelated borders */
+    .pixel-box {
+      box-shadow: 0 4px 0 rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.2);
+    }
+    /* Custom bounce for loading */
+    @keyframes flowerSpin {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.1); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    .spin-flower {
+      animation: flowerSpin 4s linear infinite;
+    }
+  </style>
+</head>
+<body class="relative font-sans antialiased select-none">
+
+  <!-- ================= LOADING SCREEN ================= -->
+  <div id="loadingOverlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0d2214] transition-opacity duration-500">
+    <div class="relative flex flex-col items-center max-w-sm px-6 text-center">
+      <!-- Sunflower Icon -->
+      <div class="w-24 h-24 mb-5 flex items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-600 shadow-xl shadow-yellow-500/20 spin-flower">
+        <svg class="w-16 h-16 text-yellow-950" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="12" r="4.5" fill="#713f12" />
+          <path d="M12 2C12.5 4 13.5 5 15 5C16.5 5 17.5 4 18 2C18.5 4 19.5 5 21 5C21.5 6.5 21 8 20 9C21.5 10 22 11.5 21 13C20 14.5 19 15 17 15C17 16.5 16 18 14 18C13 18 12.5 19 12 21C11.5 19 11 18 10 18C8 18 7 16.5 7 15C5 15 4 14.5 3 13C2 11.5 2.5 10 4 9C3 8 2.5 6.5 3 5C4.5 5 5.5 4 6 2C6.5 4 7.5 5 9 5C10.5 5 11.5 4 12 2Z" fill="#facc15" opacity="0.9" />
+        </svg>
+      </div>
+
+      <h1 class="text-xl font-bold font-pixel text-yellow-400 tracking-wider mb-2">SUNFLOWER LAND</h1>
+      <p class="text-xs text-green-300/80 mb-6 tracking-wide">Memuat Game Web3 & Sinkronisasi TMA...</p>
+
+      <!-- Progress bar -->
+      <div class="w-64 h-2.5 bg-green-950/80 rounded-full overflow-hidden border border-green-700/40 p-0.5 mb-3">
+        <div id="loadingBar" class="h-full bg-gradient-to-r from-yellow-400 to-green-400 rounded-full transition-all duration-300 w-1/4 animate-pulse"></div>
+      </div>
+
+      <div class="flex items-center space-x-2 text-[11px] text-green-400/90 font-mono">
+        <span class="inline-block w-2 h-2 rounded-full bg-green-400 animate-ping"></span>
+        <span id="loadingStatusText">Menghubungkan ke Polygon Network...</span>
+      </div>
+
+      <!-- Quick Skip Button if iframe takes too long -->
+      <button onclick="hideLoading()" class="mt-8 px-4 py-1.5 text-xs text-green-400 hover:text-white bg-green-900/40 hover:bg-green-800/60 rounded-lg border border-green-600/30 transition">
+        Masuk Langsung &rarr;
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= TOP HUD OVERLAY ================= -->
+  <header id="topHud" class="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-3 py-2 glass-panel border-b border-green-500/20 text-white transition-transform duration-300">
+    <!-- Left: Brand / Game status -->
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 rounded-lg bg-yellow-500/20 border border-yellow-400/40 flex items-center justify-center text-base">
+        🌻
+      </div>
+      <div>
+        <div class="flex items-center space-x-1.5">
+          <span class="text-xs font-bold font-pixel text-yellow-300 tracking-wide">SFL TMA</span>
+          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-green-500/20 text-green-300 border border-green-500/30">
+            <span class="w-1.5 h-1.5 mr-1 rounded-full bg-green-400 animate-pulse"></span>
+            LIVE
+          </span>
+        </div>
+        <div id="tgUserLabel" class="text-[10px] text-green-200/70 truncate max-w-[120px]">
+          Telegram Farmer
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Wallet & Controls -->
+    <div class="flex items-center space-x-1.5">
+      <!-- Connect Wallet Button -->
+      <button id="walletBtn" onclick="openWalletModal()" class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-500 hover:to-green-600 text-white shadow-md border border-green-400/30 transition active:scale-95">
+        <svg class="w-3.5 h-3.5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+        </svg>
+        <span id="walletBtnText">Hubungkan Wallet</span>
+      </button>
+
+      <!-- Reload Game Button -->
+      <button onclick="reloadGame()" title="Muat Ulang Game" class="p-1.5 rounded-lg bg-green-950/60 hover:bg-green-800/80 text-green-300 border border-green-600/30 transition active:scale-90">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+      </button>
+
+      <!-- Toggle Fullscreen / HUD Minimize -->
+      <button onclick="toggleHudVisibility()" title="Toggle Fullscreen Game" class="p-1.5 rounded-lg bg-green-950/60 hover:bg-green-800/80 text-green-300 border border-green-600/30 transition active:scale-90">
+        <svg id="hudIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= FLOATING RESTORE BUTTON (When HUD minimized) ================= -->
+  <button id="restoreHudBtn" onclick="toggleHudVisibility()" class="hidden fixed top-3 right-3 z-30 p-2 rounded-full glass-panel shadow-lg text-yellow-300 border border-yellow-400/30 hover:scale-105 active:scale-95 transition">
+    🌻
+  </button>
+
+  <!-- ================= GAME IFRAME WRAPPER ================= -->
+  <main class="game-iframe-wrapper" id="gameContainer">
+    <iframe
+      id="gameFrame"
+      src="https://sunflower-land.com/play/"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; ethereum"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-pointer-lock"
+      loading="eager"
+      onload="onGameLoaded()"
+      title="Sunflower Land Game">
+    </iframe>
+  </main>
+
+  <!-- ================= BOTTOM TOOLBAR ================= -->
+  <nav id="bottomBar" class="fixed bottom-2 left-3 right-3 z-30 flex items-center justify-around px-3 py-2 rounded-2xl glass-panel text-xs text-green-200 border border-green-500/30 shadow-2xl transition-transform duration-300">
+    <button onclick="switchGameMode('play')" class="flex flex-col items-center py-1 px-2 text-yellow-300 hover:text-white transition">
+      <span class="text-base">🎮</span>
+      <span class="text-[10px] font-medium mt-0.5">Main Game</span>
+    </button>
+    <button onclick="switchGameMode('home')" class="flex flex-col items-center py-1 px-2 text-green-300 hover:text-white transition">
+      <span class="text-base">🏡</span>
+      <span class="text-[10px] font-medium mt-0.5">Situs Web</span>
+    </button>
+    <button onclick="openTokenInfoModal()" class="flex flex-col items-center py-1 px-2 text-green-300 hover:text-white transition">
+      <span class="text-base">🪙</span>
+      <span class="text-[10px] font-medium mt-0.5">Token $SFL</span>
+    </button>
+    <button onclick="openExternalBrowser()" class="flex flex-col items-center py-1 px-2 text-green-300 hover:text-white transition">
+      <span class="text-base">🌐</span>
+      <span class="text-[10px] font-medium mt-0.5">Browser</span>
+    </button>
+    <button onclick="openHelpModal()" class="flex flex-col items-center py-1 px-2 text-green-300 hover:text-white transition">
+      <span class="text-base">❓</span>
+      <span class="text-[10px] font-medium mt-0.5">Panduan</span>
+    </button>
+  </nav>
+
+  <!-- ================= MODAL: WALLET CONNECTOR ================= -->
+  <div id="walletModal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm transition-opacity">
+    <div class="w-full sm:max-w-md glass-modal rounded-t-2xl sm:rounded-2xl p-5 text-white shadow-2xl border-t sm:border border-green-500/30 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-green-700/40 mb-4">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+            🦊
+          </div>
+          <h3 class="font-bold text-sm text-yellow-300">Web3 Wallet Connection</h3>
+        </div>
+        <button onclick="closeWalletModal()" class="text-gray-400 hover:text-white text-lg font-bold p-1">✕</button>
+      </div>
+
+      <!-- Wallet State Details (If Connected) -->
+      <div id="connectedState" class="hidden space-y-3 mb-4">
+        <div class="p-3 rounded-xl bg-green-950/60 border border-green-600/30">
+          <div class="text-[11px] text-green-400/80 mb-1">Akun Terhubung (Polygon PoS)</div>
+          <div id="displayAddress" class="font-mono text-sm font-semibold text-white break-all select-text">
+            0x000...0000
+          </div>
+          <div class="mt-2 flex items-center justify-between text-xs text-green-200">
+            <span>Saldo POL (Gas):</span>
+            <span id="displayBalance" class="font-bold text-yellow-300">0.0000 POL</span>
+          </div>
+          <div class="mt-1 flex items-center justify-between text-xs text-green-200">
+            <span>Network:</span>
+            <span id="displayNetwork" class="font-bold text-emerald-400">Polygon Mainnet (137)</span>
+          </div>
+        </div>
+
+        <div class="flex space-x-2">
+          <button onclick="copyAddress()" class="flex-1 py-2 px-3 rounded-lg bg-green-800/50 hover:bg-green-700/60 text-xs font-medium border border-green-600/40 text-green-200 text-center transition">
+            📋 Salin Alamat
+          </button>
+          <button onclick="disconnectWallet()" class="flex-1 py-2 px-3 rounded-lg bg-red-900/40 hover:bg-red-800/50 text-xs font-medium border border-red-500/40 text-red-300 text-center transition">
+            🔌 Putus Koneksi
+          </button>
+        </div>
+      </div>
+
+      <!-- Wallet Provider Selection (If Disconnected) -->
+      <div id="disconnectedState" class="space-y-2.5">
+        <p class="text-xs text-green-300/80 mb-3">
+          Pilih wallet untuk bermain Sunflower Land di Polygon Network. Transaksi Web3 dapat dikonfirmasi langsung dari wallet Anda.
+        </p>
+
+        <!-- MetaMask / Injected -->
+        <button onclick="connectInjected('MetaMask')" class="w-full flex items-center justify-between p-3 rounded-xl bg-green-950/50 hover:bg-green-800/50 border border-green-700/30 hover:border-yellow-400/40 transition active:scale-98">
+          <div class="flex items-center space-x-3">
+            <span class="text-2xl">🦊</span>
+            <div class="text-left">
+              <div class="text-xs font-bold text-white">MetaMask</div>
+              <div class="text-[10px] text-green-400/70">Injected / Mobile App Deep Link</div>
+            </div>
+          </div>
+          <span class="text-xs text-yellow-400">&rarr;</span>
+        </button>
+
+        <!-- OKX Wallet -->
+        <button onclick="connectInjected('OKX')" class="w-full flex items-center justify-between p-3 rounded-xl bg-green-950/50 hover:bg-green-800/50 border border-green-700/30 hover:border-yellow-400/40 transition active:scale-98">
+          <div class="flex items-center space-x-3">
+            <span class="text-2xl">⬛</span>
+            <div class="text-left">
+              <div class="text-xs font-bold text-white">OKX Wallet</div>
+              <div class="text-[10px] text-green-400/70">OKX Web3 & Mini App Support</div>
+            </div>
+          </div>
+          <span class="text-xs text-yellow-400">&rarr;</span>
+        </button>
+
+        <!-- Trust Wallet -->
+        <button onclick="connectInjected('TrustWallet')" class="w-full flex items-center justify-between p-3 rounded-xl bg-green-950/50 hover:bg-green-800/50 border border-green-700/30 hover:border-yellow-400/40 transition active:scale-98">
+          <div class="flex items-center space-x-3">
+            <span class="text-2xl">🛡️</span>
+            <div class="text-left">
+              <div class="text-xs font-bold text-white">Trust Wallet</div>
+              <div class="text-[10px] text-green-400/70">Multi-chain mobile wallet</div>
+            </div>
+          </div>
+          <span class="text-xs text-yellow-400">&rarr;</span>
+        </button>
+
+        <!-- Manual Address / Watch Mode -->
+        <div class="pt-2">
+          <button onclick="toggleManualInput()" class="w-full py-2 text-[11px] text-green-400/80 hover:text-green-300 underline text-center">
+            Hubungkan via Salin Alamat / Mode Pantau
+          </button>
+          <div id="manualAddressBox" class="hidden mt-2 space-y-2">
+            <input id="customAddressInput" type="text" placeholder="Masukkan alamat Polygon 0x..." class="w-full px-3 py-2 text-xs rounded-lg bg-black/40 border border-green-700/40 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400" />
+            <button onclick="connectManual()" class="w-full py-2 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xs transition">
+              Simpan & Hubungkan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network Notice -->
+      <div class="mt-4 p-2.5 rounded-lg bg-yellow-950/30 border border-yellow-500/20 text-[10px] text-yellow-300/80">
+        💡 <strong>Tips Jaringan:</strong> Sunflower Land berjalan di <strong>Polygon PoS (Chain ID: 137)</strong>. Pastikan wallet Anda memiliki sedikit saldo POL untuk gas fee bertani dan panen.
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: TOKEN SFL INFO ================= -->
+  <div id="tokenModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="w-full max-w-sm glass-modal rounded-2xl p-5 text-white shadow-2xl border border-green-500/30">
+      <div class="flex items-center justify-between pb-3 border-b border-green-700/40 mb-3">
+        <div class="flex items-center space-x-2">
+          <span class="text-xl">🌻</span>
+          <h3 class="font-bold text-sm text-yellow-300">Statistik Token $SFL</h3>
+        </div>
+        <button onclick="closeTokenInfoModal()" class="text-gray-400 hover:text-white text-lg font-bold p-1">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="p-3 rounded-xl bg-green-950/60 border border-green-600/30 flex items-center justify-between">
+          <span class="text-green-300">Harga Real-Time:</span>
+          <span id="sflPriceText" class="font-bold text-sm text-yellow-400">Memuat...</span>
+        </div>
+        <div class="p-3 rounded-xl bg-green-950/60 border border-green-600/30 flex items-center justify-between">
+          <span class="text-green-300">Perubahan 24 Jam:</span>
+          <span id="sflChangeText" class="font-bold text-sm">--%</span>
+        </div>
+        <div class="p-3 rounded-xl bg-green-950/60 border border-green-600/30">
+          <div class="text-[10px] text-green-400/80 mb-1">Contract Address (Polygon):</div>
+          <div class="font-mono text-[10px] text-white/90 break-all select-all">
+            0xd1f9c58e33933a9970353798ac555049721a5948
+          </div>
+        </div>
+      </div>
+
+      <button onclick="fetchSflPrice()" class="mt-4 w-full py-2 rounded-lg bg-green-700 hover:bg-green-600 text-white font-medium text-xs transition flex items-center justify-center space-x-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        <span>Perbarui Data Harga</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: PANDUAN (HELP) ================= -->
+  <div id="helpModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="w-full max-w-sm glass-modal rounded-2xl p-5 text-white shadow-2xl border border-green-500/30 max-h-[85vh] overflow-y-auto text-xs space-y-3">
+      <div class="flex items-center justify-between pb-2 border-b border-green-700/40">
+        <h3 class="font-bold text-yellow-300">Panduan Telegram Mini App</h3>
+        <button onclick="closeHelpModal()" class="text-gray-400 hover:text-white text-lg font-bold p-1">✕</button>
+      </div>
+
+      <div class="space-y-2 text-green-100/90 leading-relaxed">
+        <p><strong>1. Apa itu Sunflower Land?</strong><br>Game metaverse pertanian Web3 terdesentralisasi di jaringan Polygon. Anda bisa menanam tanaman, memanen hasil panen, beternak, dan memperdagangkan NFT sumber daya.</p>
+        
+        <p><strong>2. Cara Bermain di Telegram:</strong><br>Game langsung dimuat di dalam obrolan Telegram ini. Cukup hubungkan wallet atau gunakan mode Guest untuk mulai mengelola ladang Anda.</p>
+
+        <p><strong>3. Tombol Cepat:</strong></p>
+        <ul class="list-disc list-inside space-y-1 text-green-300/90 pl-1">
+          <li><strong>Icon Layar:</strong> Sembunyikan topbar untuk pengalaman bermain layar penuh murni.</li>
+          <li><strong>Reload:</strong> Segarkan frame jika game mengalami koneksi lambat.</li>
+          <li><strong>Token $SFL:</strong> Pantau fluktuasi nilai tukar koin Sunflower Land secara real-time.</li>
+        </ul>
+      </div>
+
+      <button onclick="closeHelpModal()" class="mt-4 w-full py-2 rounded-lg bg-green-700 hover:bg-green-600 text-white font-bold text-xs transition">
+        Mengerti
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // --- 1. Telegram WebApp Initialization ---
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+
+    if (tg) {
+      try {
+        tg.ready();
+        tg.expand();
+        if (tg.enableClosingConfirmation) {
+          tg.enableClosingConfirmation();
+        }
+        if (tg.setHeaderColor) {
+          tg.setHeaderColor('#0d1f12');
+        }
+        if (tg.setBackgroundColor) {
+          tg.setBackgroundColor('#0d1f12');
+        }
+
+        // Tampilkan info pengguna telegram jika tersedia
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+          const name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+          const label = document.getElementById('tgUserLabel');
+          if (label) label.textContent = name || `@${user.username}` || 'Telegram Farmer';
+        }
+      } catch (e) {
+        console.warn('Telegram SDK initialization note:', e);
+      }
+    }
+
+    // --- 2. Loading State Handler ---
+    let isLoaded = false;
+    function hideLoading() {
+      if (isLoaded) return;
+      isLoaded = true;
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => overlay.style.display = 'none', 500);
+      }
+    }
+
+    function onGameLoaded() {
+      const bar = document.getElementById('loadingBar');
+      const text = document.getElementById('loadingStatusText');
+      if (bar) bar.style.width = '100%';
+      if (text) text.textContent = 'Sunflower Land Siap!';
+      setTimeout(hideLoading, 800);
+    }
+
+    // Fallback loading timer
+    setTimeout(() => {
+      const bar = document.getElementById('loadingBar');
+      if (bar) bar.style.width = '80%';
+    }, 1500);
+    setTimeout(hideLoading, 4500);
+
+    // --- 3. Fullscreen / HUD Toggle ---
+    let hudVisible = true;
+    function toggleHudVisibility() {
+      hudVisible = !hudVisible;
+      const topHud = document.getElementById('topHud');
+      const bottomBar = document.getElementById('bottomBar');
+      const restoreBtn = document.getElementById('restoreHudBtn');
+
+      if (!hudVisible) {
+        topHud.classList.add('-translate-y-full');
+        bottomBar.classList.add('translate-y-24');
+        restoreBtn.classList.remove('hidden');
+      } else {
+        topHud.classList.remove('-translate-y-full');
+        bottomBar.classList.remove('translate-y-24');
+        restoreBtn.classList.add('hidden');
+      }
+    }
+
+    function reloadGame() {
+      const frame = document.getElementById('gameFrame');
+      const currentSrc = frame.src;
+      frame.src = 'about:blank';
+      setTimeout(() => {
+        frame.src = currentSrc;
+      }, 100);
+    }
+
+    function switchGameMode(mode) {
+      const frame = document.getElementById('gameFrame');
+      if (mode === 'play') {
+        frame.src = 'https://sunflower-land.com/play/';
+      } else if (mode === 'home') {
+        frame.src = 'https://www.sunflower-land.com/';
+      }
+    }
+
+    function openExternalBrowser() {
+      const url = 'https://sunflower-land.com/play/';
+      if (tg && tg.openLink) {
+        tg.openLink(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    }
+
+    // --- 4. Web3 Wallet State & Logic ---
+    let currentAccount = localStorage.getItem('sfl_connected_wallet') || null;
+    let provider = null;
+
+    function updateWalletUI() {
+      const btn = document.getElementById('walletBtn');
+      const btnText = document.getElementById('walletBtnText');
+      const connectedBox = document.getElementById('connectedState');
+      const disconnectedBox = document.getElementById('disconnectedState');
+      const displayAddress = document.getElementById('displayAddress');
+
+      if (currentAccount) {
+        const shortAddr = currentAccount.substring(0, 6) + '...' + currentAccount.substring(currentAccount.length - 4);
+        btnText.textContent = shortAddr;
+        btn.classList.remove('from-emerald-600', 'to-green-700');
+        btn.classList.add('from-yellow-600', 'to-amber-700', 'border-yellow-400/40');
+
+        if (connectedBox) connectedBox.classList.remove('hidden');
+        if (disconnectedBox) disconnectedBox.classList.add('hidden');
+        if (displayAddress) displayAddress.textContent = currentAccount;
+
+        fetchWalletBalance(currentAccount);
+      } else {
+        btnText.textContent = 'Hubungkan Wallet';
+        btn.classList.remove('from-yellow-600', 'to-amber-700', 'border-yellow-400/40');
+        btn.classList.add('from-emerald-600', 'to-green-700');
+
+        if (connectedBox) connectedBox.classList.add('hidden');
+        if (disconnectedBox) disconnectedBox.classList.remove('hidden');
+      }
+    }
+
+    async function fetchWalletBalance(address) {
+      try {
+        const rpcUrl = "https://polygon-rpc.com";
+        const customProvider = new ethers.JsonRpcProvider(rpcUrl);
+        const balanceWei = await customProvider.getBalance(address);
+        const pol = ethers.formatEther(balanceWei);
+        const displayBalance = document.getElementById('displayBalance');
+        if (displayBalance) {
+          displayBalance.textContent = parseFloat(pol).toFixed(4) + ' POL';
+        }
+      } catch (err) {
+        console.warn('Balance fetch note:', err);
+      }
+    }
+
+    async function connectInjected(walletName) {
+      // Periksa apakah window.ethereum tersedia di WebView
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const web3Provider = new ethers.BrowserProvider(window.ethereum);
+          const accounts = await web3Provider.send("eth_requestAccounts", []);
+          if (accounts && accounts.length > 0) {
+            currentAccount = accounts[0];
+            localStorage.setItem('sfl_connected_wallet', currentAccount);
+            updateWalletUI();
+            closeWalletModal();
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            return;
+          }
+        } catch (e) {
+          console.error('Wallet connection error:', e);
+          alert('Gagal menghubungkan wallet: ' + (e.message || 'Ditolak pengguna'));
+        }
+      } else {
+        // Fallback untuk mobile browser jika window.ethereum belum diinjeksi
+        const deepLinks = {
+          'MetaMask': `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`,
+          'OKX': `okx://wallet/dapp/details?dappUrl=${encodeURIComponent(window.location.href)}`,
+          'TrustWallet': `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(window.location.href)}`
+        };
+
+        const targetLink = deepLinks[walletName] || 'https://metamask.io/download/';
+        const confirmOpen = confirm(
+          `${walletName} extension tidak terdeteksi langsung di Telegram WebView.\n\nApakah Anda ingin membuka tautan deep link ke aplikasi ${walletName}?`
+        );
+        if (confirmOpen) {
+          if (tg && tg.openLink) {
+            tg.openLink(targetLink);
+          } else {
+            window.open(targetLink, '_blank');
+          }
+        }
+      }
+    }
+
+    function toggleManualInput() {
+      const box = document.getElementById('manualAddressBox');
+      box.classList.toggle('hidden');
+    }
+
+    function connectManual() {
+      const input = document.getElementById('customAddressInput');
+      const addr = input.value.trim();
+      if (!ethers.isAddress(addr)) {
+        alert('Alamat wallet Polygon tidak valid! Pastikan berawalan 0x dan 42 karakter.');
+        return;
+      }
+      currentAccount = addr;
+      localStorage.setItem('sfl_connected_wallet', currentAccount);
+      updateWalletUI();
+      closeWalletModal();
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    }
+
+    function disconnectWallet() {
+      currentAccount = null;
+      localStorage.removeItem('sfl_connected_wallet');
+      updateWalletUI();
+      closeWalletModal();
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    }
+
+    function copyAddress() {
+      if (currentAccount) {
+        navigator.clipboard.writeText(currentAccount).then(() => {
+          alert('Alamat berhasil disalin ke clipboard!');
+        });
+      }
+    }
+
+    // --- 5. Modal Controllers ---
+    function openWalletModal() {
+      document.getElementById('walletModal').classList.remove('hidden');
+      updateWalletUI();
+    }
+    function closeWalletModal() {
+      document.getElementById('walletModal').classList.add('hidden');
+    }
+
+    function openTokenInfoModal() {
+      document.getElementById('tokenModal').classList.remove('hidden');
+      fetchSflPrice();
+    }
+    function closeTokenInfoModal() {
+      document.getElementById('tokenModal').classList.add('hidden');
+    }
+
+    function openHelpModal() {
+      document.getElementById('helpModal').classList.remove('hidden');
+    }
+    function closeHelpModal() {
+      document.getElementById('helpModal').classList.add('hidden');
+    }
+
+    // --- 6. Live Token SFL Price Fetcher ---
+    async function fetchSflPrice() {
+      const priceText = document.getElementById('sflPriceText');
+      const changeText = document.getElementById('sflChangeText');
+      if (priceText) priceText.textContent = 'Memuat...';
+
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=sunflower-land&vs_currencies=usd,idr&include_24hr_change=true');
+        const data = await res.json();
+        if (data && data['sunflower-land']) {
+          const item = data['sunflower-land'];
+          const usd = item.usd ? `$${item.usd.toFixed(4)}` : '$0.00';
+          const idr = item.idr ? `Rp ${Math.round(item.idr).toLocaleString('id-ID')}` : '';
+          const change = item.usd_24h_change || 0;
+
+          if (priceText) priceText.textContent = `${usd} (${idr})`;
+          if (changeText) {
+            changeText.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+            changeText.className = change >= 0 ? 'font-bold text-sm text-green-400' : 'font-bold text-sm text-red-400';
+          }
+        }
+      } catch (err) {
+        if (priceText) priceText.textContent = 'Gagal memuat harga';
+      }
+    }
+
+    // Inisialisasi saat start
+    updateWalletUI();
+  </script>
+</body>
+</html>

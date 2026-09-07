@@ -1,0 +1,28 @@
+Role: Senior Web3 & Telegram Mini App (TMA) Developer.
+
+Task:
+Buatkan sistem Telegram Mini App (TMA) berbasis Python & Web Frontend yang menampilkan dan memuat game Web3 "Sunflower Land" (https://sunflower-land.com) secara fullscreen, interaktif, dan real-time langsung di dalam obrolan Telegram.
+
+Spesifikasi & Arsitektur Aplikasi:
+
+1. FRONTEND WEBAPP (HTML/JS + Web3 Wallet Integration):
+   - Buat file `index.html` yang merender Sunflower Land Web App menggunakan `<iframe>` responsif atau memuat aset WebApp Sunflower Land.
+   - Sertakan Telegram WebApp SDK resmi (https://telegram.org/js/telegram-web-app.js) dan inisialisasi `Telegram.WebApp.expand()` agar tampil penuh (fullscreen) di layar HP.
+   - Integrasikan WalletConnect v2 SDK / Web3Modal agar pengguna dapat menghubungkan crypto wallet (MetaMask Mobile, OKX Wallet, atau Trust Wallet) langsung dari dalam Telegram browser tanpa harus keluar aplikasi.
+   - Tambahkan overlay UI sederhana di bagian bawah/atas untuk status koneksi wallet dan indikator loading game.
+
+2. BACKEND BOT (Python + python-telegram-bot v20+):
+   - Buat file `main.py` menggunakan library `python-telegram-bot` secara asynchronous.
+   - Buat command `/start` dan `/farm` yang merespons pesan interaktif dengan tombol `InlineKeyboardButton` bertipe `web_app`.
+   - Tombol tersebut harus mengarah ke URL Frontend WebApp Sunflower Land yang di-host.
+   - Sediakan fitur opsional: Command `/status` untuk mengecek status server Sunflower Land atau harga token $FLOWER secara real-time via API publik.
+
+3. PANDUAN DEPLOYMENT & BOTFATHER:
+   - Berikan struktur folder proyek yang rapi (`/public`, `main.py`, `requirements.txt`).
+   - Berikan petunjuk hosting gratis untuk frontend (Vercel / Netlify / Cloudflare Pages) karena Telegram WebApp mewajibkan protokol HTTPS.
+   - Tuliskan langkah konfigurasi di @BotFather (pembuatan Menu Button / WebApp URL).
+
+Mohon hasilkan seluruh kode lengkap tanpa pemotongan (no placeholders) dan siap di-deploy.
+
+api key bot tellegram:8972855558:AAG-gayE-PG5YaOK941EhtsvcItsj_-OGA4
+sunflower web link:https://www.sunflower-land.com/
